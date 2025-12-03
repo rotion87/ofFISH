@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <title>偷懶養魚小遊戲・多魚種版</title>
+  <title>養魚小遊戲・多魚種版</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- 8-bit 字體 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,6 +41,7 @@
       justify-content: space-between;
       font-size: 8px;
       gap: 4px;
+      cursor: default;
     }
     .stat {
       white-space: nowrap;
@@ -157,6 +158,7 @@
       image-rendering: pixelated;
       background: linear-gradient(to right, var(--bodyFrom, #ffdf6b), var(--bodyTo, #ff9b42));
       animation: swim 6s linear infinite;
+      cursor: pointer;
     }
     .fish::before {
       content: "";
@@ -183,6 +185,19 @@
       animation-play-state: paused;
       transform: rotate(90deg) !important;
       top: 150px !important;
+      cursor: default;
+    }
+
+    .fish-label {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 6px;
+      color: #f0f0f0;
+      text-shadow: 0 0 2px #000, 0 0 2px #000;
+      pointer-events: none;
+      white-space: nowrap;
     }
 
     @keyframes swim {
@@ -363,9 +378,16 @@
     html.mini-mode .game-wrapper {
       width: 220px;
       border-width: 3px;
-      transform: scale(0.85);
+      transform: scale(0.9);
       transform-origin: top left;
       box-shadow: 0 0 8px rgba(0,0,0,0.7);
+      position: fixed;
+      top: 20px;
+      left: 20px;
+    }
+
+    html.mini-mode .hud {
+      cursor: move;
     }
 
     /* 迷你模式隱藏一些不必要的東西 */
@@ -490,6 +512,7 @@
     const excelOverlay = document.getElementById("excelOverlay");
     const gameWrapper = document.querySelector(".game-wrapper");
     const miniWindowBtn = document.getElementById("miniWindowBtn");
+    const hudEl = document.querySelector(".hud");
 
     // ===== 簡單音效 =====
     let audioCtx = null;
@@ -564,7 +587,9 @@
       }
     ];
 
-    function createFishElement(index, species) {
+    const fishNamePool = ["泡泡", "小尾", "丸子", "阿金", "阿藍", "阿粉", "阿綠", "波波"];
+
+    function createFishElement(index, species, displayName) {
       const el = document.createElement("div");
       el.className = "fish";
       el.style.setProperty("--bodyFrom", species.bodyFrom);
@@ -581,6 +606,15 @@
       el.style.animationDuration = duration + "s";
       el.style.animationDelay = delay + "s";
 
+      // 名字小標
+      const label = document.createElement("div");
+      label.className = "fish-label";
+      label.textContent = displayName;
+      el.appendChild(label);
+
+      el.dataset.fishIndex = index;
+      el.title = displayName;
+
       fishContainer.appendChild(el);
       return el;
     }
@@ -590,12 +624,27 @@
       fishList = [];
       for (let i = 0; i < fishCount; i++) {
         const species = speciesList[i % speciesList.length];
-        const el = createFishElement(i, species);
+        const nameFromPool = fishNamePool[i % fishNamePool.length];
+        const displayName = `${species.name}-${nameFromPool}`;
+        const el = createFishElement(i, species, displayName);
         fishList.push({
           id: i,
           speciesName: species.name,
+          displayName,
           alive: true,
           el
+        });
+
+        // 點魚顯示訊息
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const fish = fishList[i];
+          if (!fish) return;
+          if (fish.alive) {
+            showMessage(`「${fish.displayName}」在水裡悠遊中～`);
+          } else {
+            showMessage(`「${fish.displayName}」已經翻肚了…`);
+          }
         });
       }
     }
@@ -655,7 +704,7 @@
       if (living.length === 0) return;
       const picked = living[Math.floor(Math.random() * living.length)];
       markFishDead(picked);
-      showMessage(`「${picked.speciesName}」翻肚了 QQ`, 3500);
+      showMessage(`「${picked.displayName}」翻肚了 QQ`, 3500);
 
       if (allFishDead()) {
         restartBtn.classList.remove("hidden");
@@ -673,7 +722,7 @@
     }
 
     // ===== 存檔 / 讀取 (localStorage) =====
-    const SAVE_KEY = "lazyFishGame_v2";
+    const SAVE_KEY = "lazyFishGame_v3";
 
     function saveGame() {
       const data = {
@@ -682,9 +731,9 @@
       };
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-        saveStatusEl.textContent = "自動存檔中…";
+        if (saveStatusEl) saveStatusEl.textContent = "自動存檔中…";
       } catch (e) {
-        saveStatusEl.textContent = "存檔失敗（空間不足？）";
+        if (saveStatusEl) saveStatusEl.textContent = "存檔失敗（空間不足？）";
       }
     }
 
@@ -703,10 +752,8 @@
         }
         if (Array.isArray(data.fishAlive)) {
           data.fishAlive.forEach((alive, idx) => {
-            if (fishList[idx]) {
-              if (!alive) {
-                markFishDead(fishList[idx]);
-              }
+            if (fishList[idx] && !alive) {
+              markFishDead(fishList[idx]);
             }
           });
         }
@@ -714,18 +761,20 @@
           restartBtn.classList.remove("hidden");
         }
         updateHUD();
-        saveStatusEl.textContent = "已載入上次進度。";
+        if (saveStatusEl) saveStatusEl.textContent = "已載入上次進度。";
       } catch (e) {
         console.error(e);
-        saveStatusEl.textContent = "讀取存檔失敗，已重置新缸。";
+        if (saveStatusEl) saveStatusEl.textContent = "讀取存檔失敗，已重置新缸。";
       }
     }
 
-    resetSaveBtn.addEventListener("click", () => {
-      localStorage.removeItem(SAVE_KEY);
-      resetTank();
-      saveStatusEl.textContent = "紀錄已清除，重新開始。";
-    });
+    if (resetSaveBtn) {
+      resetSaveBtn.addEventListener("click", () => {
+        localStorage.removeItem(SAVE_KEY);
+        resetTank();
+        if (saveStatusEl) saveStatusEl.textContent = "紀錄已清除，重新開始。";
+      });
+    }
 
     // ===== 操作事件 =====
     feedBtn.addEventListener("click", () => {
@@ -787,6 +836,36 @@
         }
       }
     });
+
+    // ===== 迷你模式拖曳（拖 HUD 移動整個小視窗） =====
+    let dragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function onDragMove(e) {
+      if (!dragging) return;
+      const x = e.clientX - dragOffsetX;
+      const y = e.clientY - dragOffsetY;
+      gameWrapper.style.left = x + "px";
+      gameWrapper.style.top = y + "px";
+    }
+
+    function stopDrag() {
+      dragging = false;
+      document.removeEventListener("mousemove", onDragMove);
+      document.removeEventListener("mouseup", stopDrag);
+    }
+
+    if (isMiniMode) {
+      hudEl.addEventListener("mousedown", (e) => {
+        dragging = true;
+        const rect = gameWrapper.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        document.addEventListener("mousemove", onDragMove);
+        document.addEventListener("mouseup", stopDrag);
+      });
+    }
 
     // ===== 主迴圈（每秒一 tick） =====
     setInterval(() => {
