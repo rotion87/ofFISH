@@ -256,64 +256,6 @@
 
     .hidden { display: none; }
 
-    /* Excel 偽裝畫面 */
-    .excel-overlay {
-      position: fixed;
-      inset: 0;
-      background: #ffffff;
-      color: #111;
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      display: flex;
-      flex-direction: column;
-      z-index: 999;
-    }
-    .excel-titlebar {
-      background: #185abd;
-      color: #fff;
-      padding: 4px 8px;
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .excel-ribbon {
-      background: #f3f3f3;
-      border-bottom: 1px solid #d0d0d0;
-      padding: 4px 8px;
-      font-size: 11px;
-    }
-    .excel-main {
-      flex: 1;
-      display: flex;
-      overflow: auto;
-    }
-    .excel-sidebar {
-      width: 120px;
-      border-right: 1px solid #d0d0d0;
-      font-size: 11px;
-      padding: 4px;
-      background: #fafafa;
-    }
-    .excel-grid-wrapper {
-      flex: 1;
-      overflow: auto;
-    }
-    .excel-table {
-      border-collapse: collapse;
-      font-size: 11px;
-      min-width: 600px;
-    }
-    .excel-table th,
-    .excel-table td {
-      border: 1px solid #d0d0d0;
-      padding: 2px 4px;
-      min-width: 60px;
-      height: 18px;
-    }
-    .excel-table th { background: #f3f3f3; text-align: center; }
-    .excel-table td { text-align: right; }
-    .excel-table td:first-child { text-align: left; }
-
     @media (max-height: 500px) {
       body { align-items: flex-start; }
       .game-wrapper { transform: scale(0.9); transform-origin: top center; }
@@ -348,51 +290,12 @@
     html.mini-mode .hint,
     html.mini-mode .save-status,
     html.mini-mode #resetSaveBtn,
-    html.mini-mode #restartBtn,
-    html.mini-mode #excelOverlay {
+    html.mini-mode #restartBtn {
       display: none !important;
     }
   </style>
 </head>
 <body>
-  <!-- Excel 偽裝畫面：按空白鍵切換 -->
-  <div id="excelOverlay" class="excel-overlay hidden">
-    <div class="excel-titlebar">
-      <span>Budget2025.xlsx - Excel</span>
-      <span>﹣ ☐ ✕</span>
-    </div>
-    <div class="excel-ribbon">
-      檔案  常用  插入  版面配置  公式  資料  檢視
-    </div>
-    <div class="excel-main">
-      <div class="excel-sidebar">
-        <strong>樞紐分析</strong><br>
-        ▸ 報表一<br>
-        ▸ 報表二<br><br>
-        <strong>篩選器</strong><br>
-        年度：2025<br>
-        月份：全部
-      </div>
-      <div class="excel-grid-wrapper">
-        <table class="excel-table">
-          <thead>
-            <tr>
-              <th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><th>1</th><td>品項</td><td>預算</td><td>實際</td><td>差異</td><td>%</td></tr>
-            <tr><th>2</th><td>行銷費用</td><td>120,000</td><td>115,300</td><td>4,700</td><td>3.9%</td></tr>
-            <tr><th>3</th><td>人事成本</td><td>420,000</td><td>421,800</td><td>-1,800</td><td>-0.4%</td></tr>
-            <tr><th>4</th><td>租金</td><td>180,000</td><td>180,000</td><td>0</td><td>0.0%</td></tr>
-            <tr><th>5</th><td>雜支</td><td>30,000</td><td>28,450</td><td>1,550</td><td>5.2%</td></tr>
-            <tr><th>6</th><td>小計</td><td>750,000</td><td>745,550</td><td>4,450</td><td>0.6%</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
   <!-- 遊戲本體 -->
   <div class="game-wrapper">
     <div class="hud">
@@ -401,7 +304,7 @@
       <div class="stat">AGE <span id="age">0</span>s</div>
       <button id="muteBtn" title="開關音效">🔊</button>
     </div>
-    <div class="hint">空白鍵：Excel 偽裝</div>
+    <div class="hint">點魚：會自我介紹 🐟</div>
 
     <div class="tank">
       <div class="sand"></div>
@@ -451,7 +354,6 @@
     const resetSaveBtn = document.getElementById("resetSaveBtn");
     const muteBtn = document.getElementById("muteBtn");
     const saveStatusEl = document.getElementById("saveStatus");
-    const excelOverlay = document.getElementById("excelOverlay");
     const gameWrapper = document.querySelector(".game-wrapper");
     const miniWindowBtn = document.getElementById("miniWindowBtn");
     const hudEl = document.querySelector(".hud");
@@ -606,7 +508,7 @@
     }
 
     // 存檔
-    const SAVE_KEY = "lazyFishGame_v3";
+    const SAVE_KEY = "lazyFishGame_v4";
     function saveGame() {
       const data = { tank, fishAlive: fishList.map(f => f.alive) };
       try {
@@ -674,23 +576,6 @@
     document.addEventListener("click", function oneClick() {
       if (!audioCtx && soundEnabled) initAudio();
       document.removeEventListener("click", oneClick);
-    });
-
-    // Excel 偽裝（空白鍵）
-    let excelVisible = false;
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        if (isMiniMode) return;
-        excelVisible = !excelVisible;
-        if (excelVisible) {
-          excelOverlay.classList.remove("hidden");
-          gameWrapper.style.display = "none";
-        } else {
-          excelOverlay.classList.add("hidden");
-          gameWrapper.style.display = "flex";
-        }
-      }
     });
 
     // 迷你模式拖曳
