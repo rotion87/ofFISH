@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Lazy Fish Tank - PS1 Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: #1a1a1a;
+        font-family: 'Press Start 2P', monospace;
+        overflow: hidden; /* Prevent scrolling on mobile */
+        touch-action: manipulation; /* Improve touch response */
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* PS1 Scanline Effect */
+      .scanlines {
+        background: linear-gradient(
+          to bottom,
+          rgba(255,255,255,0),
+          rgba(255,255,255,0) 50%,
+          rgba(0,0,0,0.2) 50%,
+          rgba(0,0,0,0.2)
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+      }
+      
+      /* CRT Flicker Animation */
+      @keyframes flicker {
+        0% { opacity: 0.97; }
+        5% { opacity: 0.95; }
+        10% { opacity: 0.9; }
+        15% { opacity: 0.95; }
+        20% { opacity: 0.98; }
+        50% { opacity: 0.95; }
+        80% { opacity: 0.9; }
+        100% { opacity: 0.97; }
+      }
+      .crt-flicker {
+        animation: flicker 0.15s infinite;
+      }
+
+      /* Fish Floating Animation */
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      /* Pixelated rendering for images/canvas if used */
+      .pixelated {
+        image-rendering: pixelated;
+      }
+      
+      /* Custom Scrollbar for Quest/Lists */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #333; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #888; 
+        border: 2px solid #333;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ps1: {
+                bg: '#2F3136',
+                panel: '#8E8E8E',
+                dark: '#202020',
+                light: '#DCDCDC',
+                blue: '#0000AA',
+                water: '#004466'
+              }
+            },
+            fontFamily: {
+              retro: ['"Press Start 2P"', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
