@@ -346,6 +346,36 @@
         transform-origin: top center;
       }
     }
+
+    /* ===== 迷你視窗模式（?mini=1）===== */
+    html.mini-mode,
+    html.mini-mode body {
+      background: transparent;
+    }
+
+    html.mini-mode body {
+      margin: 0;
+      padding: 0;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    html.mini-mode .game-wrapper {
+      width: 220px;
+      border-width: 3px;
+      transform: scale(0.85);
+      transform-origin: top left;
+      box-shadow: 0 0 8px rgba(0,0,0,0.7);
+    }
+
+    /* 迷你模式隱藏一些不必要的東西 */
+    html.mini-mode .hint,
+    html.mini-mode .save-status,
+    html.mini-mode #resetSaveBtn,
+    html.mini-mode #restartBtn,
+    html.mini-mode #excelOverlay {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -417,11 +447,19 @@
       <button id="cleanBtn">換水 (降風險)</button>
       <button id="restartBtn" class="hidden">重新養一缸</button>
       <button id="resetSaveBtn">重置紀錄</button>
+      <button id="miniWindowBtn">迷你視窗</button>
     </div>
     <div class="save-status" id="saveStatus">自動存檔中…</div>
   </div>
 
   <script>
+    // 先判斷是不是迷你模式
+    const urlParams = new URL(window.location.href).searchParams;
+    const isMiniMode = urlParams.get('mini') === '1';
+    if (isMiniMode) {
+      document.documentElement.classList.add('mini-mode');
+    }
+
     // ===== 基本遊戲狀態（以整缸為單位） =====
     let tank = {
       level: 1,
@@ -451,6 +489,7 @@
     const saveStatusEl = document.getElementById("saveStatus");
     const excelOverlay = document.getElementById("excelOverlay");
     const gameWrapper = document.querySelector(".game-wrapper");
+    const miniWindowBtn = document.getElementById("miniWindowBtn");
 
     // ===== 簡單音效 =====
     let audioCtx = null;
@@ -712,6 +751,17 @@
       resetTank();
     });
 
+    // 迷你視窗按鈕：開一個小視窗（?mini=1）
+    miniWindowBtn.addEventListener("click", () => {
+      const base = window.location.href.split("?")[0];
+      const miniUrl = base + "?mini=1";
+      window.open(
+        miniUrl,
+        "lazyFishMini",
+        "width=260,height=260,menubar=0,toolbar=0,location=0,status=0"
+      );
+    });
+
     // 第一次點擊啟動 audio
     document.addEventListener("click", function oneClick() {
       if (!audioCtx && soundEnabled) {
@@ -725,6 +775,8 @@
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
         e.preventDefault();
+        // 迷你模式就不切 Excel，避免小視窗被遮掉
+        if (isMiniMode) return;
         excelVisible = !excelVisible;
         if (excelVisible) {
           excelOverlay.classList.remove("hidden");
